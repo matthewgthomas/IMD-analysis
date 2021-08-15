@@ -1,0 +1,20 @@
+---
+title: "Correlations between domains"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(IMD)
+```
+
+# Correlations between English sub-domains
+
+Statistically significant negative correlation between the two sub-domains of the 'barriers to housing and services' domain: geographical barriers and wider barriers:
+
+```{r message=FALSE, warning=FALSE}
+imd_england_lsoa_subdomains |> 
+  ggplot(aes(x = Geographical_barriers_rank, y = Wider_barriers_rank)) +
+  geom_point(alpha = 0.1) +
+  geom_smooth(method = "lm")
+```
