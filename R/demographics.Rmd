@@ -1,0 +1,190 @@
+---
+title: "Deprivation and demographics"
+output: html_notebook
+---
+
+```{r load_packages}
+library(tidyverse)
+library(IMD)
+library(geographr)
+```
+
+# Age structure by deprivation
+
+## England
+
+```{r imd_age_england}
+imd_england_lsoa |> 
+  left_join(geographr::population_lsoa, by = "lsoa_code") |> 
+  
+  mutate(IMD_quintile = Hmisc::cut2(IMD_rank, g = 5) |> as.integer()) |> 
+  
+  # Sum number of people in each age group, by deprivation quintile
+  group_by(IMD_quintile) |>
+  summarise(across(matches("^[0-9]+$"), sum)) |> 
+  
+  pivot_longer(cols = -IMD_quintile, names_to = "Age", values_to = "n_people") |> 
+  mutate(Age = as.integer(Age)) |> 
+  
+  ggplot(aes(x = Age, y = n_people)) +
+  geom_line(aes(colour = factor(IMD_quintile))) +
+  scale_y_continuous(labels = scales::comma) +
+  theme_bw() +
+  theme(
+    panel.grid.major.x = element_blank(), 
+    panel.grid.minor.x = element_blank(),
+    panel.grid.minor.y = element_blank()
+  ) +
+  labs(
+    y = "No. people",
+    colour = "Deprivation quintile\n(1 = most deprived)",
+    title = "Younger people tend to live in the most deprived parts of England"
+  )
+```
+
+## Wales
+
+```{r imd_age_wales}
+imd_wales_lsoa |> 
+  left_join(geographr::population_lsoa, by = "lsoa_code") |> 
+  
+  mutate(IMD_quintile = Hmisc::cut2(IMD_rank, g = 5) |> as.integer()) |> 
+  
+  # Sum number of people in each age group, by deprivation quintile
+  group_by(IMD_quintile) |>
+  summarise(across(matches("^[0-9]+$"), sum)) |> 
+  
+  pivot_longer(cols = -IMD_quintile, names_to = "Age", values_to = "n_people") |> 
+  mutate(Age = as.integer(Age)) |> 
+  
+  ggplot(aes(x = Age, y = n_people)) +
+  geom_line(aes(colour = factor(IMD_quintile))) +
+  scale_y_continuous(labels = scales::comma) +
+  theme_bw() +
+  theme(
+    panel.grid.major.x = element_blank(), 
+    panel.grid.minor.x = element_blank(),
+    panel.grid.minor.y = element_blank()
+  ) +
+  labs(
+    y = "No. people",
+    colour = "Deprivation quintile\n(1 = most deprived)",
+    title = "Younger people tend to live in the most deprived parts of Wales"
+  )
+```
+
+## Scotland
+
+```{r imd_age_scotland}
+imd_scotland_dz |> 
+  left_join(
+    geographr::population_dz |> filter(sex == "All"), 
+    by = "dz_code"
+  ) |> 
+  
+  mutate(IMD_quintile = Hmisc::cut2(IMD_rank, g = 5) |> as.integer()) |> 
+  
+  # Sum number of people in each age group, by deprivation quintile
+  group_by(IMD_quintile) |>
+  summarise(across(matches("^[0-9]+$"), sum)) |> 
+  
+  pivot_longer(cols = -IMD_quintile, names_to = "Age", values_to = "n_people") |> 
+  mutate(Age = as.integer(Age)) |> 
+  
+  ggplot(aes(x = Age, y = n_people)) +
+  geom_line(aes(colour = factor(IMD_quintile))) +
+  scale_y_continuous(labels = scales::comma) +
+  theme_bw() +
+  theme(
+    panel.grid.major.x = element_blank(), 
+    panel.grid.minor.x = element_blank(),
+    panel.grid.minor.y = element_blank()
+  ) +
+  labs(
+    y = "No. people",
+    colour = "Deprivation quintile\n(1 = most deprived)",
+    title = "The pattern isn't quite as strong in Scotland"
+  )
+```
+
+## Northern Ireland
+
+```{r imd_age_ni}
+imd_northern_ireland_soa |> 
+  left_join(
+    geographr::population_soa |> filter(sex == "All"), 
+    by = "soa_code"
+  ) |> 
+  
+  mutate(IMD_quintile = Hmisc::cut2(IMD_rank, g = 5) |> as.integer()) |> 
+  
+  # Sum number of people in each age group, by deprivation quintile
+  group_by(IMD_quintile) |>
+  summarise(across(matches("^[0-9]+"), sum)) |> 
+  
+  pivot_longer(cols = -IMD_quintile, names_to = "Age", values_to = "n_people") |> 
+  
+  ggplot(aes(x = Age, y = n_people, group = factor(IMD_quintile))) +
+  geom_line(aes(colour = factor(IMD_quintile))) +
+  
+  scale_y_continuous(labels = scales::comma) +
+  theme_bw() +
+  theme(
+    panel.grid.major.x = element_blank(), 
+    panel.grid.minor.x = element_blank(),
+    panel.grid.minor.y = element_blank()
+  ) +
+  labs(
+    y = "No. people",
+    colour = "Deprivation quintile\n(1 = most deprived)",
+    title = "Fewer older people live in the most deprived parts of NI"
+  )
+```
+
+# Ethnicity
+
+```{r imd_ethnicity_england_wales}
+ethnicity_totals <- 
+  geographr::population_lsoa_ethnicity_census |> 
+  group_by(ethnicity) |> 
+  summarise(total_people = sum(n_people)) |> 
+  ungroup()
+
+imd_england_lsoa |> 
+  left_join(geographr::population_lsoa_ethnicity_census, by = "lsoa_code") |> 
+  
+  mutate(IMD_quintile = Hmisc::cut2(IMD_rank, g = 5) |> as.integer()) |> 
+  
+  group_by(IMD_quintile, ethnicity) |> 
+  summarise(n_people = sum(n_people)) |> 
+  ungroup() |> 
+  
+  left_join(ethnicity_totals, by = "ethnicity") |> 
+  mutate(prop_people = n_people / total_people) |> 
+  
+  ggplot(aes(x = ethnicity, y = prop_people)) +
+  geom_col(aes(fill = factor(IMD_quintile)), position = position_stack(reverse = TRUE)) +
+  geom_text(
+    aes(label = scales::percent(prop_people)), 
+    size = 3,
+    position = position_stack(vjust = 0.5)
+  ) +
+  
+  scale_y_continuous(labels = scales::percent) +
+  theme_bw() +
+  theme(
+    panel.grid.major.x = element_blank(), 
+    panel.grid.minor.x = element_blank(),
+    panel.grid.minor.y = element_blank(), 
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  ) +
+  labs(
+    x = NULL,
+    y = "No. people",
+    fill = "Deprivation quintile\n(1 = most deprived)",
+    title = "People from minoritised ethnic backgrounds tend to live in the most deprived areas",
+    subtitle = "Using ethnicity estimates from Census 2011 for England and Wales"
+  )
+
+```
+
