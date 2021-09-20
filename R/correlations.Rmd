@@ -5,10 +5,12 @@ output: html_notebook
 
 ```{r}
 library(tidyverse)
+library(geographr)
 library(IMD)
+library(GGally)
 ```
 
-# Correlations between English sub-domains
+## Correlations between English sub-domains
 
 Statistically significant negative correlation between the two sub-domains of the 'barriers to housing and services' domain: geographical barriers and wider barriers:
 
@@ -17,4 +19,76 @@ imd_england_lsoa_subdomains |>
   ggplot(aes(x = Geographical_barriers_rank, y = Wider_barriers_rank)) +
   geom_point(alpha = 0.1) +
   geom_smooth(method = "lm")
+```
+
+## Regional correlations between domains and sub-domains
+
+```{r regional_wrangling}
+imd_england_all <- 
+  left_join(
+    IMD::imd_england_lsoa,
+    IMD::imd_england_lsoa_subdomains
+  )
+
+# Create LSOA to Region lookup
+lsoa_region <-
+  geographr::lookup_lsoa_msoa |> 
+  left_join(geographr::lookup_msoa_lad) |> 
+  left_join(geographr::lookup_lad_region) |> 
+
+  select(lsoa_code, region_name)
+
+imd_england_all <- 
+  imd_england_all |> 
+  left_join(lsoa_region)
+```
+
+# Barriers to housing and key services
+
+Overall:
+
+```{r message=FALSE, warning=FALSE}
+imd_england_all |> 
+  ggplot(aes(x = Housing_and_Access_rank, y = IMD_rank)) +
+  geom_point(alpha = 0.1) +
+  geom_smooth(method = "lm")
+```
+
+By region:
+
+```{r message=FALSE, warning=FALSE}
+imd_england_all |> 
+  ggplot(aes(x = Housing_and_Access_rank, y = IMD_rank)) +
+  geom_point(alpha = 0.1) +
+  geom_smooth(method = "lm") +
+  facet_wrap(~region_name)
+```
+
+```{r message=FALSE, warning=FALSE}
+imd_england_all |> 
+  ggplot(aes(x = Geographical_barriers_rank, y = Wider_barriers_rank)) +
+  geom_point(alpha = 0.1) +
+  geom_smooth(method = "lm") +
+  facet_wrap(~region_name)
+```
+
+```{r message=FALSE, warning=FALSE}
+imd_england_all |> 
+  ggplot(aes(x = Geographical_barriers_rank, y = IMD_rank)) +
+  geom_point(alpha = 0.1) +
+  geom_smooth(method = "lm") +
+  facet_wrap(~region_name)
+```
+
+```{r}
+imd_england_all |> 
+  select(ends_with("rank"), region_name) |> 
+
+  ggpairs(
+    columns = 1:14,
+    mapping = aes(colour = region_name),
+    diag = NULL,
+    lower = list(continuous = wrap("smooth", alpha = 0.3, size = 0.01))
+  ) +
+  theme_classic()
 ```
