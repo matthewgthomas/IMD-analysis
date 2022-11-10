@@ -42,3 +42,38 @@ imd_unchanged |>
 imd_unchanged |>
   mutate(core20 = if_else(`2004` <= 2, "20% most deprived", "Other")) |>
   janitor::tabyl(core20)
+
+# Number of LSOAs in each region
+lsoas_per_region <-
+  lookup_lsoa11_ltla21 |>
+  left_join(lookup_ltla21_region21) |>
+
+  count(region21_name, sort = TRUE, name = "total")
+
+# Number of 20% most deprivation LSOAs in each region in 2019
+deprived_lsoas_per_region <-
+  IMD::imd_england_lsoa |>
+  select(lsoa11_code = lsoa_code, IMD_decile) |>
+  filter(IMD_decile <= 2) |>
+  left_join(lookup_lsoa11_ltla21) |>
+  left_join(lookup_ltla21_region21) |>
+
+  count(region21_name, sort = TRUE, name = "total_deprived")
+
+# In which regions are most areas that get stuck in deprivation?
+imd_unchanged |>
+  filter(`2004` <= 2) |>
+  left_join(lookup_lsoa11_ltla21) |>
+  left_join(lookup_ltla21_region21) |>
+
+  count(region21_name, sort = TRUE) |>
+
+  left_join(lsoas_per_region) |>
+  mutate(proportion = n / total) |>
+
+  left_join(deprived_lsoas_per_region) |>
+  mutate(proportion_most_deprived = n / total_deprived)
+
+#--> North West, Yorkshire, West Mids
+# More than half of the most deprived areas of the North West, North East, Yorkshire, and West Mids in 2019 have been among the country's most deprived areas since 2004
+# Nearly one in five neighbourhoods in the North West have been among the nation's most deprived for at least 15 years
