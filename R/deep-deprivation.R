@@ -3,7 +3,8 @@ library(geographr)
 library(IMD)
 library(sf)
 
-lookup_lsoa01_lsoa11 <- read_sf("https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/LSOA01_LSOA11_LAD11_EW_LU/FeatureServer/0/query?outFields=*&where=1%3D1&f=geojson") |>
+# Source: https://geoportal.statistics.gov.uk/datasets/ons::lower-layer-super-output-area-2001-to-lower-layer-super-output-area-2011-to-local-authority-district-2011-lookup-in-england-and-wales-1/about
+lookup_lsoa01_lsoa11 <- read_sf("https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/LSOA01_LSOA11_LAD11_EW_LU_ddfe1cd1c2784c9b991cded95bc915a9/FeatureServer/0/query?outFields=*&where=1%3D1&f=geojson") |>
   st_drop_geometry()
 
 lookup_lsoa01_lsoa11 <-
@@ -13,7 +14,7 @@ lookup_lsoa01_lsoa11 <-
 imd2004 <- IMD::imd2004_lsoa01_england |> left_join(lookup_lsoa01_lsoa11) |> mutate(year = 2004) |> select(lsoa11_code, year, IMD_decile)
 imd2007 <- IMD::imd2007_lsoa01_england |> left_join(lookup_lsoa01_lsoa11) |> mutate(year = 2007) |> select(lsoa11_code, year, IMD_decile)
 imd2010 <- IMD::imd2010_lsoa01_england |> left_join(lookup_lsoa01_lsoa11) |> mutate(year = 2010) |> select(lsoa11_code, year, IMD_decile)
-imd2015 <- IMD::imd2015_lsoa11_england |> mutate(year = 2015) |>  select(lsoa11_code = lsoa_code, year, IMD_decile)
+imd2015 <- IMD::imd2015_lsoa11_england |> mutate(year = 2015) |>  select(lsoa11_code = lsoa11_code, year, IMD_decile)
 imd2019 <- IMD::imd_england_lsoa |> mutate(year = 2019) |>  select(lsoa11_code = lsoa_code, year, IMD_decile)
 
 imd_trends <- bind_rows(imd2004, imd2007, imd2010, imd2015, imd2019)
