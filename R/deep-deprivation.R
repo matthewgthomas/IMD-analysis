@@ -153,3 +153,51 @@ lba_trends |>
   )
 
 ggsave("output/persistent deprivation in left behind areas.png", width = 150, height = 100, units = "mm")
+
+# ---- Is deprivation stickier in different regions? ----
+# Make LSOA to Region lookup
+lookup_lsoa11_region21 <-
+  geographr::lookup_lsoa11_ltla21 |>
+  left_join(geographr::lookup_ltla21_region21) |>
+  select(lsoa11_code, region21_name)
+
+lba_trends |>
+  left_join(lookup_lsoa11_region21) |>
+
+  group_by(region21_name, lba, core20, deprivation_unchanged) |>
+  summarise(n = n()) |>
+  mutate(prop = n / sum(n)) |>
+  ungroup() |>
+
+  drop_na() |>
+
+  mutate(core20 = fct_rev(core20)) |>
+
+  ggplot(aes(x = core20, y = prop)) +
+  geom_col(aes(fill = deprivation_unchanged)) +
+  facet_grid(region21_name ~ lba, switch = "y") +
+  coord_flip() +
+  scale_y_continuous(labels = scales::percent) +
+  scale_x_discrete(position = "top") +
+  scale_fill_manual(values = c("#d7d8d7", "#ee2a24")) +
+  theme_minimal() +
+  theme(
+    plot.title.position = "plot",
+    plot.caption.position = "plot",
+    legend.position = "top",
+    plot.background = element_rect(fill = "white"),
+    panel.grid.minor.x = element_blank(),
+    panel.grid.major.y = element_blank(),
+    plot.subtitle = element_text(colour = "#5c747a"),
+    strip.text.y.left = element_text(angle = 0)
+  ) +
+  labs(
+    title = "Deprivation is most persistent in England's left behind' neghbourhoods",
+    subtitle = "'Deprivation status' is based on whether a small area's deprivation quintile has \nchanged since 2004 ('Changing') or not ('Persistent').",
+    fill = "Deprivation status",
+    x = NULL,
+    y = NULL,
+    caption = "@matthewgthomas analysis of DLUHC and OCSI data"
+  )
+
+ggsave("output/persistent deprivation in left behind areas - by region.png", width = 150, height = 120, units = "mm")
