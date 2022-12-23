@@ -54,3 +54,14 @@ le_female |>
   # geom_point(alpha = 0.2) +
   geom_smooth(method = "lm") +
   facet_wrap(~domain)
+
+le_male |>
+  select(msoa11_code, `Left Behind Area?`, `Life expectancy`, `Civic Assets rank`, `Connectedness rank`, `Engaged community rank`) |>
+  pivot_longer(cols = ends_with("rank"), names_to = "domain", values_to = "rank") |>
+
+  # arrange(desc(`Life expectancy`)) |>
+
+  ggplot(aes(x = rank, y = `Life expectancy`, colour = `Left Behind Area?`, fill = `Left Behind Area?`)) +
+  # geom_point(alpha = 0.2) +
+  geom_smooth(method = "lm") +
+  facet_wrap(~domain)
