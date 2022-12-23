@@ -22,14 +22,25 @@ imd_trends <- bind_rows(imd2004, imd2007, imd2010, imd2015, imd2019)
 
 imd_trends <-
   imd_trends |>
+
+  mutate(IMD_quintile = case_when(
+    IMD_decile == 1 | IMD_decile == 2 ~ 1,
+    IMD_decile == 3 | IMD_decile == 4 ~ 2,
+    IMD_decile == 5 | IMD_decile == 6 ~ 3,
+    IMD_decile == 7 | IMD_decile == 8 ~ 4,
+    IMD_decile == 9 | IMD_decile == 10 ~ 5
+  )) |>
+
+  select(-IMD_decile) |>
+
   # There are some duplicates due to best-fit lookup between 2001 and 2011 codes, so play it safe and take the most-deprived of any duplicates
   group_by(lsoa11_code, year) |>
-  filter(IMD_decile == min(IMD_decile)) |>
+  filter(IMD_quintile == min(IMD_quintile)) |>
   ungroup() |>
 
   distinct() |>
 
-  pivot_wider(names_from = year, values_from = IMD_decile)
+  pivot_wider(names_from = year, values_from = IMD_quintile)
 
 imd_unchanged <-
   imd_trends |>
@@ -93,11 +104,12 @@ lookup_lsoa11_ward17 <-
 #
 lba_trends <-
   imd_trends |>
+
   left_join(lookup_lsoa11_ward17) |>
   left_join(IMD::cni_england_ward17) |>
 
   mutate(
-    core20 = if_else(`2004` <= 2, "20% most deprived", "Less deprived areas"),
+    core20 = if_else(`2004` <= 1, "20% most deprived", "Less deprived areas"),
     deprivation_unchanged = if_else(`2004` == `2007` & `2007` == `2010` & `2010` == `2015` & `2015` == `2019`, "Persistent", "Changing"),
     lba = if_else(`Left Behind Area?`, "Left-behind area", "Other")
   )
@@ -133,7 +145,7 @@ lba_trends |>
   ) +
   labs(
     title = "Deprivation is most persistent in England's left behind' neghbourhoods",
-    subtitle = "'Deprivation status' is based on whether a small area's deprivation decile has \nchanged since 2004 ('Changing') or not ('Persistent').",
+    subtitle = "'Deprivation status' is based on whether a small area's deprivation quintile has \nchanged since 2004 ('Changing') or not ('Persistent').",
     fill = "Deprivation status",
     x = NULL,
     y = NULL,
