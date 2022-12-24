@@ -189,3 +189,29 @@ le_birth_ltla21 |>
   geom_point() +
   geom_smooth(method = "lm") +
   facet_wrap(~Sex)
+
+# ---- Life expectancy in Scotland ----
+# Manually downloaded from https://scotland.shinyapps.io/ScotPHO_profiles_tool/
+le_scotland <- read_csv("data/scotpho_data_extract.csv")
+
+le_iz11 <-
+  le_scotland |>
+  filter(area_type == "Intermediate zone") |>
+  mutate(sex = str_remove(indicator, "Life expectancy, ")) |>
+  left_join(IMD::cni_scotland_iz11, by = c("area_code" = "iz11_code"))
+
+le_iz11 |>
+  filter(year == 2018) |>
+  select(LE = measure, sex, ends_with("rank")) |>
+  pivot_longer(cols = ends_with("rank"), names_to = "domain", values_to = "rank") |>
+
+  ggplot(aes(x = rank, y = LE, colour = sex, fill = sex)) +
+  geom_point(alpha = 0.1) +
+  geom_smooth(method = "lm") +
+  facet_wrap(~domain)
+
+# How has life expectancy changed over time in Scottish left behind areas?
+le_iz11 |>
+  ggplot(aes(x = year, y = measure, colour = `Left Behind Area?`, fill = `Left Behind Area?`)) +
+  # geom_point(alpha = 0.1) +
+  geom_smooth()
