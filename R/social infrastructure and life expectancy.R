@@ -139,7 +139,7 @@ le_lad <- read_excel(tf, sheet = "HE - Local area estimates", skip = 0)
 le_birth_ltla21 <-
   le_lad |>
   filter(
-    Period == "2018-20",
+    Period %in% c("2011-13", "2018-20"),
     str_detect(Code, "^E"),
     Ageband == 1
   ) |>
@@ -149,6 +149,7 @@ le_birth_ltla21 <-
 
 # Plot correlation between life expectancy and domains of community needs in Local Authorities
 le_birth_ltla21 |>
+  filter(Period == "2018-20") |>
   pivot_longer(cols = ends_with("_prop")) |>
 
   ggplot(aes(x = value, y = LE, colour = Sex, fill = Sex)) +
@@ -158,6 +159,7 @@ le_birth_ltla21 |>
 
 # Plot correlation between healthy life expectancy and domains of community needs in Local Authorities
 le_birth_ltla21 |>
+  filter(Period == "2018-20") |>
   pivot_longer(cols = ends_with("_prop")) |>
 
   ggplot(aes(x = value, y = HLE, colour = Sex, fill = Sex)) +
@@ -179,3 +181,11 @@ lm(LE ~ assets_prop + connectedness_prop + engaged_prop, data = le_birth_ltla21)
   geom_pointrange(aes(ymin = conf.low, ymax = conf.high)) +
   coord_flip() +
   labs(title = "Predictors of life expectancy in Local Authorities")
+
+# How has LE changed over time in left behind areas?
+#--> Largest change has been in left behind areas, where LE has dropped the most (but not statistically significantly)
+le_birth_ltla21 |>
+  ggplot(aes(x = lba_prop, y = LE, colour = Period, fill = Period)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  facet_wrap(~Sex)
