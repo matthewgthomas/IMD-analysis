@@ -48,7 +48,11 @@ le_female |>
   select(msoa11_code, `Left Behind Area?`, `Life expectancy`, `Civic Assets rank`, `Connectedness rank`, `Engaged community rank`) |>
   pivot_longer(cols = ends_with("rank"), names_to = "domain", values_to = "rank") |>
 
-  # arrange(desc(`Life expectancy`)) |>
+  # Some MSOAs appear in more than one ward. Keep the one with the greatest community needs (i.e. lowest rank)
+  # (or use `max` instead of `min` to be conservative and use wards with the least community needs - it doesn't qualitatively change the results)
+  group_by(msoa11_code, `Left Behind Area?`, `Life expectancy`, domain) |>
+  summarise(rank = min(rank)) |>
+  ungroup() |>
 
   ggplot(aes(x = rank, y = `Life expectancy`, colour = `Left Behind Area?`, fill = `Left Behind Area?`)) +
   # geom_point(alpha = 0.2) +
@@ -59,7 +63,11 @@ le_male |>
   select(msoa11_code, `Left Behind Area?`, `Life expectancy`, `Civic Assets rank`, `Connectedness rank`, `Engaged community rank`) |>
   pivot_longer(cols = ends_with("rank"), names_to = "domain", values_to = "rank") |>
 
-  # arrange(desc(`Life expectancy`)) |>
+  # Some MSOAs appear in more than one ward. Keep the one with the greatest community needs (i.e. lowest rank)
+  # (or use `max` instead of `min` to be conservative and use wards with the least community needs - it doesn't qualitatively change the results)
+  group_by(msoa11_code, `Left Behind Area?`, `Life expectancy`, domain) |>
+  summarise(rank = min(rank)) |>
+  ungroup() |>
 
   ggplot(aes(x = rank, y = `Life expectancy`, colour = `Left Behind Area?`, fill = `Left Behind Area?`)) +
   # geom_point(alpha = 0.2) +
